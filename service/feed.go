@@ -12,7 +12,7 @@ type FeedService struct{}
 
 func (service *FeedService) Feed() serializer.FeedResponse {
 	var videosTable []model.VideoTable
-	model.DB.Order("id desc").Limit(5).Find(&videosTable)
+	model.DB.Order("id desc").Limit(10).Find(&videosTable)
 
 	var videos []model.Video
 	for _, v := range videosTable {

@@ -52,8 +52,8 @@ func (service *FavoriteActionService) FavoriteAction() serializer.FavoriteAction
 		}
 	}
 	// 标记视频已点赞和更新点赞数
-	model.DB.Model(&model.Video{}).Where("id = ?", video_id).Update("is_favorite", true)
-	model.DB.Model(&model.Video{}).Where("id = ?", video_id).Update("favorite_count", gorm.Expr("favorite_count+1"))
+	model.DB.Model(&model.VideoTable{}).Where("id = ?", video_id).Update("is_favorite", true)
+	model.DB.Model(&model.VideoTable{}).Where("id = ?", video_id).Update("favorite_count", gorm.Expr("favorite_count+1"))
 
 	return serializer.FavoriteActionResponse{
 		Response: serializer.Response{
@@ -66,7 +66,7 @@ func (service *FavoriteActionService) FavoriteAction() serializer.FavoriteAction
 func (service *FavoriteActionService) FavoriteCancleAction() serializer.FavoriteActionResponse {
 	claim, _ := utils.ParseToken(service.Token)
 	video_id := service.VideoId
-	user_id := claim.Id
+	user_id := claim.UserId
 
 	var favorite model.Favorite
 
@@ -78,8 +78,8 @@ func (service *FavoriteActionService) FavoriteCancleAction() serializer.Favorite
 		}
 	}
 	model.DB.Delete(&favorite)
-	model.DB.Model(&model.Video{}).Where("id = ?", video_id).Update("is_favorite", false)
-	model.DB.Model(&model.Video{}).Where("id = ?", video_id).Update("favorite_count", gorm.Expr("favorite_count-1"))
+	model.DB.Model(&model.VideoTable{}).Where("id = ?", video_id).Update("is_favorite", false)
+	model.DB.Model(&model.VideoTable{}).Where("id = ?", video_id).Update("favorite_count", gorm.Expr("favorite_count-1"))
 
 	return serializer.FavoriteActionResponse{
 		Response: serializer.Response{
@@ -91,7 +91,15 @@ func (service *FavoriteActionService) FavoriteCancleAction() serializer.Favorite
 
 func (service *FavoriteListService) FavoriteList() serializer.VideoListResponse {
 	var favorites []model.Favorite
-	model.DB.Where("user_id=?", service.UserId).Find(&favorites)
+	res := model.DB.Where("user_id=?", service.UserId).Find(&favorites)
+	if res.RowsAffected == 0 {
+		return serializer.VideoListResponse{
+			Response: serializer.Response{
+				StatusCode: 0,
+			},
+			VideoList: []model.Video{},
+		}
+	}
 	var video_ids []int64
 	for _, v := range favorites {
 		video_ids = append(video_ids, v.VideoId)
