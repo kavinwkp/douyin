@@ -1,9 +1,13 @@
 package main
 
-import "github.com/gin-gonic/gin"
+import (
+	"douyin/config"
+
+	"github.com/gin-gonic/gin"
+)
 
 func main() {
-	// config.InitDB()
+	config.InitDB()
 	r := gin.Default()
 
 	initRouter(r)
