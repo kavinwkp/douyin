@@ -3,8 +3,11 @@ package service
 import (
 	"errors"
 	"fmt"
+	"math/rand"
 	"mime/multipart"
 	"path/filepath"
+	"strconv"
+	"time"
 
 	"douyin/config"
 	"douyin/model"
@@ -48,12 +51,13 @@ func (service *PublishService) Publish() serializer.PublishResponse {
 			},
 		}
 	}
+	rand.Seed(time.Now().Unix())
 	// 视频保存成功就在Video表中插入视记录
 	var video = model.VideoTable{
 		UserID:        user.Id,
 		Title:         service.Title,
 		PlayUrl:       finalName,
-		CoverUrl:      "cover.png",
+		CoverUrl:      "cover_" + strconv.Itoa(rand.Intn(6)) + ".png",
 		FavoriteCount: 0,
 		CommentCount:  0,
 		IsFavorite:    false,
@@ -72,15 +76,17 @@ func (service *PublishService) Publish() serializer.PublishResponse {
 }
 
 func (service *PublishListService) PublishList() serializer.VideoListResponse {
+	// print(service.Token)
+	// print(service.UserID)
 	var videosTable []model.VideoTable
-	if err := model.DB.Where("user_id=?", service.UserID).Find(&videosTable).Error; err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return serializer.VideoListResponse{
-				Response: serializer.Response{
-					StatusCode: 0,
-				},
-				VideoList: []model.Video{},
-			}
+	result := model.DB.Where("user_id=?", service.UserID).Find(&videosTable)
+
+	if result.Error != nil || result.RowsAffected == 0 {
+		return serializer.VideoListResponse{
+			Response: serializer.Response{
+				StatusCode: 0,
+			},
+			VideoList: []model.Video{},
 		}
 	}
 

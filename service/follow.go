@@ -88,7 +88,15 @@ func (service *FollowListService) FollowList() serializer.FollowListResponse {
 
 	var follow []model.Follow
 
-	model.DB.Where("user_id=?", service.UserID).Find(&follow)
+	result := model.DB.Where("user_id=?", service.UserID).Find(&follow)
+	if result.RowsAffected == 0 {
+		return serializer.FollowListResponse{
+			Response: serializer.Response{
+				StatusCode: 0,
+			},
+			UserList: []model.User{},
+		}
+	}
 
 	var to_user_ids []int64
 	for _, v := range follow {
